@@ -230,14 +230,13 @@ YCommunicator::YCommunicator(){
 
 }
 
-void YCommunicator::registerDefaultCallback(void(*callbackfunc)(YCommInstruction inst)){
+void YCommunicator::registerDefaultCallback(void(*callbackfunc)(uint8_t type, uint8_t command, uint8_t * data, uint16_t data_size)){
 	default_callback = callbackfunc;
 }
 
-void YCommunicator::registerCallback(uint8_t command, void(*callbackfunc)(YCommInstruction inst)){
+void YCommunicator::registerCallback(uint8_t command, void(*callbackfunc)(uint8_t type, uint8_t command, uint8_t * data, uint16_t data_size)){
 	callbacks_map[command] = callbackfunc;
 }
-
 void YCommunicator::dispatch(YCommInstruction inst){
 	out.write(inst);
 }
@@ -262,9 +261,9 @@ void YCommunicator::write(uint8_t byte){
 	if (inp.hasInstructions()){
 		YCommInstruction inst = inp.shiftInstruction();
 		if (callbacks_map.count(inst.command)){
-			callbacks_map[inst.command](inst);
+			callbacks_map[inst.command](inst.type, inst.command, inst.data, inst.data_size);
 		}else{
-			default_callback(inst);
+			default_callback(inst.type, inst.command, inst.data, inst.data_size);
 		}
 		free(inst.data);
 	}

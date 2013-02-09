@@ -113,8 +113,8 @@
 	public:
 		YCommunicator();
 
-		void registerDefaultCallback(void(*callbackfunc)(YCommInstruction inst));
-		void registerCallback(uint8_t command, void(*callbackfunc)(YCommInstruction inst));
+		void registerDefaultCallback(void(*callbackfunc)(uint8_t type, uint8_t command, uint8_t * data, uint16_t data_size));
+		void registerCallback(uint8_t command, void(*callbackfunc)(uint8_t type, uint8_t command, uint8_t * data, uint16_t data_size));
 		void dispatch(YCommInstruction inst);
 		void dispatch(uint8_t command, uint8_t * data, uint16_t data_size);
 		void dispatch(uint8_t type, uint8_t command, uint8_t * data, uint16_t data_size);
@@ -122,8 +122,8 @@
 		uint8_t read(void);
 		void write(uint8_t byte);
 	protected:
-		void (*default_callback)(YCommInstruction inst);
-		std::map<uint8_t,void (*)(YCommInstruction inst)> callbacks_map;
+		void (*default_callback)(uint8_t type, uint8_t command, uint8_t * data, uint16_t data_size);
+		std::map<uint8_t,void (*)(uint8_t type, uint8_t command, uint8_t * data, uint16_t data_size)> callbacks_map;
 
 		YCommSerialInputBuffer inp;
 		YCommSerialOutputBuffer out;
