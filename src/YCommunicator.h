@@ -90,6 +90,8 @@
 		uint8_t * tmp_stream;
 		unsigned int tmp_curr_byte;
 		unsigned int expected_packet_size;
+		bool escape_next ;
+		std::vector<uint8_t> tmp_buff;
 
 
 

@@ -24,8 +24,8 @@ void YCommPacket::serialize(uint8_t * buffer){
 	this->payload->serialize(serial_payload);
 
 
-	buffer[0] = payload_size;
-	memcpy(&buffer[1],serial_payload, payload_size);
+	//buffer[0] = payload_size;
+	memcpy(buffer,serial_payload, payload_size);
 	memcpy(&buffer[size-2],&this->checksum,2);
 
 
@@ -36,7 +36,7 @@ uint8_t YCommPacket::getSize(void){
 
 	uint8_t payload_size = this->payload->getSize();
 
-	size += sizeof(payload_size);
+	//size += sizeof(payload_size);
 	size += sizeof(checksum);
 	size += payload_size;
 
@@ -52,14 +52,16 @@ uint16_t YCommPacket::calcChecksum(void){
 YCommPacket * YCommPacket::unserialize(uint8_t * buffer, unsigned int size) {
 	YCommPacket * p;
 
-	uint8_t psize = buffer[0];
+
+	//uint8_t psize = buffer[0];
+	unsigned int psize = size-2;
 
 	uint8_t * payl = (uint8_t *)malloc(sizeof (uint8_t) * psize);
-	memcpy(payl,&(buffer[1]),psize);
+
+	memcpy(payl,buffer,psize);
 
 	uint16_t * ch;
 	//memcpy(ch , &(buffer[size-2]),2);
-
 	YCommInstruction * inst = YCommInstruction::unserialize(payl, psize);
 
 
@@ -134,11 +136,24 @@ void YCommSerialInputBuffer::reset(void){
 	expected_inst_size= 0;
 	tmp_curr_byte=0;
 	expected_packet_size=2;
+	escape_next = false;
+
+	tmp_buff.clear();
 	//free(tmp_stream);
 }
 bool YCommSerialInputBuffer::read(uint8_t byte){
 
-	//std::cout << "Read byte: " << (int)byte << std::endl;
+	if (byte == 0x7c && !escape_next){
+		buildInstruction();
+		reset();
+	}else if (byte == 0 && !escape_next){
+		escape_next = true;
+	}else {
+		tmp_buff.push_back(byte);
+		escape_next = false;
+	}
+	return true;
+	/*
 	if (tmp_curr_byte==0){
 		expected_packet_size = (int)byte + 3;
 		tmp_stream = (uint8_t * )malloc(sizeof(uint8_t) * (int)expected_packet_size);
@@ -156,7 +171,7 @@ bool YCommSerialInputBuffer::read(uint8_t byte){
 		tmp_curr_byte++;
 	}
 	return true;
-
+	*/
 }
 bool YCommSerialInputBuffer::read(uint8_t * buffer , unsigned int length){
 	for(unsigned int i=0; i<length; i++){
@@ -169,10 +184,7 @@ bool YCommSerialInputBuffer::hasInstructions(){
 }
 YCommInstruction YCommSerialInputBuffer::shiftInstruction(){
 
-
-
 		YCommInstruction inst = *(instructions.begin());
-
 
 
 		instructions.erase(instructions.begin());
@@ -184,8 +196,11 @@ YCommInstruction YCommSerialInputBuffer::shiftInstruction(){
 
 void YCommSerialInputBuffer::buildInstruction(){
 
-
-	YCommPacket * pack = YCommPacket::unserialize(tmp_stream, expected_packet_size);
+	uint8_t data[tmp_buff.size()];
+	for (int i=0;i<tmp_buff.size();i++){
+		data[i] = tmp_buff.at(i);
+	}
+	YCommPacket * pack = YCommPacket::unserialize(data, tmp_buff.size());
 
 	YCommInstruction * inst = (YCommInstruction *)pack->payload;
 
@@ -211,8 +226,13 @@ void YCommSerialOutputBuffer::write(YCommPacket packet){
 	uint8_t tmpbuffer[size];
 	packet.serialize(tmpbuffer);
 	for(uint16_t i=0; i<size;i++){
+		//escape if needed...
+		if (tmpbuffer[i] == 0 || tmpbuffer[i] == 0x7c){
+			buffer.push_back(0);
+		}
 		buffer.push_back(tmpbuffer[i]);
 	}
+	buffer.push_back(0x7c);
 
 }
 
