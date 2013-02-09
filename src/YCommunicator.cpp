@@ -63,7 +63,7 @@ YCommPacket * YCommPacket::unserialize(uint8_t * buffer, unsigned int size) {
 	uint16_t * ch;
 	//memcpy(ch , &(buffer[size-2]),2);
 	YCommInstruction * inst = YCommInstruction::unserialize(payl, psize);
-
+	free(payl);
 
 	YCommPacket * pack = new YCommPacket(inst);
 
@@ -153,25 +153,6 @@ bool YCommSerialInputBuffer::read(uint8_t byte){
 		escape_next = false;
 	}
 	return true;
-	/*
-	if (tmp_curr_byte==0){
-		expected_packet_size = (int)byte + 3;
-		tmp_stream = (uint8_t * )malloc(sizeof(uint8_t) * (int)expected_packet_size);
-	}
-
-	tmp_stream[tmp_curr_byte] = byte;
-
-
-	if (tmp_curr_byte == (expected_packet_size-1)){
-
-		buildInstruction();
-		reset();
-
-	}else{
-		tmp_curr_byte++;
-	}
-	return true;
-	*/
 }
 bool YCommSerialInputBuffer::read(uint8_t * buffer , unsigned int length){
 	for(unsigned int i=0; i<length; i++){
@@ -201,9 +182,10 @@ void YCommSerialInputBuffer::buildInstruction(){
 		data[i] = tmp_buff.at(i);
 	}
 	YCommPacket * pack = YCommPacket::unserialize(data, tmp_buff.size());
-
 	YCommInstruction * inst = (YCommInstruction *)pack->payload;
 
+	free(pack->payload);
+	free(pack);
 	instructions.push_back(*inst);
 
 
@@ -284,6 +266,7 @@ void YCommunicator::write(uint8_t byte){
 		}else{
 			default_callback(inst);
 		}
+		free(inst.data);
 	}
 }
 
