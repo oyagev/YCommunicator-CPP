@@ -46,7 +46,13 @@ uint8_t YCommPacket::getSize(void){
 
 
 uint16_t YCommPacket::calcChecksum(void){
-	return 0;
+	uint8_t * buffer = (uint8_t*)malloc(sizeof(uint8_t)*this->payload->getSize());
+	this->payload->serialize(buffer);
+	uint16_t checksum = YCommunicator::checksum(buffer,this->payload->getSize());
+	free(buffer);
+	return checksum;
+
+
 }
 
 YCommPacket * YCommPacket::unserialize(uint8_t * buffer, unsigned int size) {
@@ -181,12 +187,20 @@ void YCommSerialInputBuffer::buildInstruction(){
 	for (int i=0;i<tmp_buff.size();i++){
 		data[i] = tmp_buff.at(i);
 	}
-	YCommPacket * pack = YCommPacket::unserialize(data, tmp_buff.size());
-	YCommInstruction * inst = (YCommInstruction *)pack->payload;
+	int size = tmp_buff.size();
 
+	uint16_t checksum = ( 0 | (int)tmp_buff.at(size-2) ) << 8 ;
+	checksum += (int)tmp_buff.at(size-1);
+
+
+	YCommPacket * pack = YCommPacket::unserialize(data, tmp_buff.size());
+	if (pack->checksum == checksum){
+		YCommInstruction * inst = (YCommInstruction *)pack->payload;
+		instructions.push_back(*inst);
+
+	}
 	free(pack->payload);
 	free(pack);
-	instructions.push_back(*inst);
 
 
 }
@@ -267,6 +281,22 @@ void YCommunicator::write(uint8_t byte){
 		}
 		free(inst.data);
 	}
+}
+
+uint16_t YCommunicator::checksum(uint8_t * data, uint16_t data_size){
+	int i = 0;
+	uint16_t tmp_word;
+	uint16_t checksum = 0;
+	for (i=0;i<data_size-1;i+=2){
+		tmp_word = (0 | data[i]) << 8;
+		tmp_word |= data[i+1];
+		checksum = checksum xor tmp_word;
+	}
+	if (i<data_size){
+		tmp_word = (0 | data[i]) << 8;
+		checksum = checksum xor tmp_word;
+	}
+	return checksum;
 }
 
 

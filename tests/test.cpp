@@ -9,6 +9,21 @@
 #include <iostream>
 #include <stdlib.h>
 
+void printNextInstruction(YCommSerialInputBuffer * buff){
+	std::cout << "has inst ? " << ((buff->hasInstructions()) ? "YES" : "NO!") << std::endl;
+	if (buff->hasInstructions()){
+		YCommInstruction inst = buff->shiftInstruction();
+
+		std::cout << "Type: " << (int)inst.type << std::endl;
+		std::cout << "Command: " << (int)inst.command << std::endl;
+		std::cout << "Data: ";
+		for (int i = 0; i<inst.data_size; i++){
+			std::cout << (int)inst.data[i] << " ";
+		}
+		std::cout <<std::endl;
+	}
+	std::cout << "******************************"<<std::endl;
+}
 
 int main(void){
 
@@ -18,65 +33,27 @@ int main(void){
 	r.read('A');
 	r.read('B');
 	r.read('C');
-	r.read(5);
-	r.read(10);
+	r.read(2);
+	r.read(66);
 	r.read(0x7c);
-
-	r.read(0);
-	r.read(0);
 	r.read('B');
 	r.read('D');
 	r.read('F');
 	r.read('G');
-	r.read(0);
-	r.read(0);
-	r.read(0);
-	r.read(0x7c);
 	r.read('F');
-	r.read('F');
-	r.read(5);
-	r.read(10);
+	r.read('G');
+	r.read(0);
+	r.read(66);
+	r.read(68);
 	r.read(0x7c);
-	std::cout << "has inst " << (int)r.hasInstructions() << std::endl;
-	YCommInstruction inst = r.shiftInstruction();
 
-
-
-	std::cout << "Type: " << (int)inst.type << std::endl;
-	std::cout << "Command: " << (int)inst.command << std::endl;
-	std::cout << "Data: " << inst.data << std::endl;
-
-	inst = r.shiftInstruction();
-
-
-	std::cout << "Type: " << (int)inst.type << std::endl;
-	std::cout << "Command: " << (int)inst.command << std::endl;
-	std::cout << "Data: ";
-	for (int i = 0; i<inst.data_size; i++){
-		std::cout << (int)inst.data[i] << " ";
+	for(int i=0;i<10;i++){
+		printNextInstruction(&r);
 	}
-	std::cout << std::endl;
 
-	/*
-	uint8_t command = 0xA;
-	uint8_t data[5] ;
-	data[1]=10;
-
-
-	YCommInstruction inst = YCommInstruction(0x1,command , data, sizeof(data));
-	inst.getSize();
-	YCommPacket pack = YCommPacket(&inst);
-
-	uint8_t length = pack.getSize();
-	uint8_t buff[length];
-
-	pack.serialize(buff);
-
-	for (uint8_t i=0; i<length; i++){
-		std::cout << "Serial " << (int)i << ": " << (int)buff[i] << std::endl;
-	}
-	*/
 
 
 
 }
+
+

@@ -121,6 +121,7 @@
 		uint16_t available(void);
 		uint8_t read(void);
 		void write(uint8_t byte);
+		static uint16_t checksum(uint8_t * data, uint16_t data_size);
 	protected:
 		void (*default_callback)(uint8_t type, uint8_t command, uint8_t * data, uint16_t data_size);
 		std::map<uint8_t,void (*)(uint8_t type, uint8_t command, uint8_t * data, uint16_t data_size)> callbacks_map;
